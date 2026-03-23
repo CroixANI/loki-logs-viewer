@@ -791,7 +791,9 @@ else:
     if len(file_names) == 1:
         render_file_view(file_names[0])
     else:
-        tabs = st.tabs([f"📄 {n[:20]}{'…' if len(n)>20 else ''}" for n in file_names])
+        def _tab_icon(name: str) -> str:
+            return '⚡' if name.lower().endswith('.json') else '📋'
+        tabs = st.tabs([f"{_tab_icon(n)} {n[:20]}{'…' if len(n)>20 else ''}" for n in file_names])
         for tab, name in zip(tabs, file_names):
             with tab:
                 render_file_view(name)
