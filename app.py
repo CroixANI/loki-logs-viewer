@@ -1,5 +1,7 @@
 import streamlit as st
 import re
+import json
+from datetime import datetime, timezone
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -160,6 +162,75 @@ def parse_file(content: str) -> list:
         result.append({'num': i, 'text': line, 'level': detect_level(line)})
     return result
 
+_LOKI_LEVEL_MAP = {
+    'debug':       'DEBUG',
+    'information': 'INFO',
+    'info':        'INFO',
+    'warning':     'WARN',
+    'warn':        'WARN',
+    'error':       'ERROR',
+    'critical':    'CRITICAL',
+    'fatal':       'CRITICAL',
+    'trace':       'TRACE',
+}
+
+def _ns_to_dt(ns_str: str) -> str:
+    """Convert a nanosecond-epoch string to a human-readable UTC timestamp."""
+    try:
+        ts = int(ns_str) / 1_000_000_000
+        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3] + ' UTC'
+    except (ValueError, OSError):
+        return ns_str
+
+def parse_loki_json(content: str) -> list | None:
+    """Parse a Grafana Loki query-response JSON file into log entries.
+
+    Returns a list of entries on success, or None if the content is not a
+    recognisable Loki response (so the caller can fall back to plain-text).
+    """
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError:
+        return None
+
+    # Validate Loki envelope
+    try:
+        streams = data['data']['result']
+        if not isinstance(streams, list):
+            return None
+    except (KeyError, TypeError):
+        return None
+
+    result = []
+    entry_num = 0
+
+    for stream in streams:
+        labels = stream.get('stream', {})
+        severity_raw = labels.get('severity_text') or labels.get('detected_level') or ''
+        level = _LOKI_LEVEL_MAP.get(severity_raw.lower(), 'DEFAULT')
+
+        service  = labels.get('service_instance_id') or labels.get('service_name', '')
+        scope    = labels.get('scope_name', '')
+
+        for value in stream.get('values', []):
+            if len(value) < 2:
+                continue
+            ts_str, message = value[0], value[1]
+            ts = _ns_to_dt(ts_str)
+
+            # Build a readable prefix from available metadata
+            prefix_parts = [f'[{ts}]']
+            if service:
+                prefix_parts.append(f'[{service}]')
+            if scope:
+                prefix_parts.append(f'[{scope}]')
+            prefix = ' '.join(prefix_parts)
+
+            entry_num += 1
+            result.append({'num': entry_num, 'text': f'{prefix} {message}', 'level': level})
+
+    return result if result else None
+
 def count_levels(entries: list) -> dict:
     counts = {}
     for e in entries:
@@ -196,7 +267,7 @@ with st.sidebar:
     st.markdown("**Open Log Files**")
     uploaded = st.file_uploader(
         "Drop files here",
-        type=["log", "txt", "out", "err"],
+        type=["log", "txt", "out", "err", "json"],
         accept_multiple_files=True,
         label_visibility="collapsed",
     )
@@ -205,7 +276,14 @@ with st.sidebar:
         for f in uploaded:
             if f.name not in st.session_state.files:
                 content = f.read().decode("utf-8", errors="replace")
-                st.session_state.files[f.name] = parse_file(content)
+                if f.name.lower().endswith('.json'):
+                    entries = parse_loki_json(content)
+                    if entries is None:
+                        # Not a Loki file — fall back to plain-text parsing
+                        entries = parse_file(content)
+                else:
+                    entries = parse_file(content)
+                st.session_state.files[f.name] = entries
 
     if st.session_state.files:
         st.divider()
@@ -300,7 +378,7 @@ if not st.session_state.files:
     <div class="empty-state">
         <div class="empty-icon">📂</div>
         <div class="empty-text">Open a log file from the sidebar to get started</div>
-        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem">Supports .log · .txt · .out · .err</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem">Supports .log · .txt · .out · .err · .json (Loki)</div>
     </div>
     """, unsafe_allow_html=True)
 else:
