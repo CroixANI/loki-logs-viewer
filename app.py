@@ -127,13 +127,51 @@ div[data-testid="stButton"] button:hover {
 .empty-icon { font-size: 3rem; opacity: 0.35; }
 .empty-text { font-size: 1.10rem; }
 
-/* ── Tabs ───────────────────────────────────────────────────────────────── */
-div[data-testid="stTabs"] button[data-baseweb="tab"] {
-    font-size: 1.05rem !important;
-    padding: 0.5rem 1rem !important;
+/* ── Hide native uploader file list ─────────────────────────────────────── */
+[data-testid="stFileUploaderFileList"] { display: none !important; }
+
+/* ── Custom tab bar ─────────────────────────────────────────────────────── */
+.tab-bar {
+    display: flex; flex-wrap: wrap; gap: 2px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.8rem; padding-bottom: 0;
 }
-div[data-testid="stTabs"] button[data-baseweb="tab"] p {
+.tab-bar div[data-testid="stButton"] button {
+    background: none !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 6px 6px 0 0 !important;
+    color: var(--muted) !important;
+    font-family: 'Syne', sans-serif !important;
     font-size: 1.05rem !important;
+    padding: 0.4rem 0.8rem !important;
+    margin-bottom: -1px !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+    transition: color 0.15s, border-color 0.15s !important;
+}
+.tab-bar div[data-testid="stButton"] button:hover {
+    color: var(--text) !important;
+    border-bottom-color: var(--muted) !important;
+    background: rgba(255,255,255,0.03) !important;
+}
+.tab-bar-active div[data-testid="stButton"] button {
+    color: var(--accent) !important;
+    border-bottom-color: var(--accent) !important;
+    background: rgba(91,138,245,0.07) !important;
+}
+.tab-close div[data-testid="stButton"] button {
+    background: none !important;
+    border: none !important;
+    color: var(--muted) !important;
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.3rem !important;
+    min-width: unset !important;
+    box-shadow: none !important;
+}
+.tab-close div[data-testid="stButton"] button:hover {
+    color: var(--error) !important;
+    background: rgba(248,113,113,0.08) !important;
 }
 
 /* ── Recent file link buttons ───────────────────────────────────────────── */
@@ -652,8 +690,8 @@ def parse_content(name: str, content: str) -> list:
 # ── Session state ─────────────────────────────────────────────────────────────
 if 'files' not in st.session_state:
     st.session_state.files = {}
-if 'focus_new_tab' not in st.session_state:
-    st.session_state.focus_new_tab = False
+if 'active_file' not in st.session_state:
+    st.session_state.active_file = None
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -674,28 +712,9 @@ with st.sidebar:
                 raw = f.read()
                 content = raw.decode("utf-8", errors="replace")
                 st.session_state.files[f.name] = parse_content(f.name, content)
-                st.session_state.focus_new_tab = True
+                st.session_state.active_file = f.name
                 cached_path = cache_file(f.name, raw)
                 add_to_recent(f.name, cached_path)
-
-    if st.session_state.files:
-        st.divider()
-        st.markdown("**Open Files**")
-        to_close = []
-        for name in list(st.session_state.files.keys()):
-            col1, col2 = st.columns([5, 1])
-            with col1:
-                entries = st.session_state.files[name]
-                counts = count_levels(entries)
-                errors = counts.get('ERROR', 0) + counts.get('CRITICAL', 0)
-                badge = f' 🔴{errors}' if errors else ''
-                st.markdown(f'<div style="font-size:0.97rem;padding:4px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{name}">{name[:22]}{"…" if len(name)>22 else ""}{badge}</div>', unsafe_allow_html=True)
-            with col2:
-                if st.button("✕", key=f"close_{name}"):
-                    to_close.append(name)
-        for name in to_close:
-            del st.session_state.files[name]
-            st.rerun()
 
     # ── Recent files ──────────────────────────────────────────────────────────
     recent = load_recent()
@@ -711,11 +730,13 @@ with st.sidebar:
                         raw = Path(path).read_bytes()
                         content = raw.decode("utf-8", errors="replace")
                         st.session_state.files[name] = parse_content(name, content)
-                        st.session_state.focus_new_tab = True
+                        st.session_state.active_file = name
                         add_to_recent(name, path)
                     except Exception:
                         remove_from_recent(path)
                         st.toast("Failed to open file", icon="🚨", duration=8)
+                else:
+                    st.session_state.active_file = name
                 st.rerun()
 
     st.divider()
@@ -787,6 +808,9 @@ def render_file_view(name: str):
     st.components.v1.html(render_log_lines(filtered, highlight_term), height=600, scrolling=False)
 
 # ── Dispatch ──────────────────────────────────────────────────────────────────
+def _tab_icon(name: str) -> str:
+    return '⚡' if name.lower().endswith('.json') else '📋'
+
 if not st.session_state.files:
     st.markdown("""
     <div class="empty-state">
@@ -797,30 +821,42 @@ if not st.session_state.files:
     """, unsafe_allow_html=True)
 else:
     file_names = list(st.session_state.files.keys())
-    if len(file_names) == 1:
-        render_file_view(file_names[0])
-    else:
-        def _tab_icon(name: str) -> str:
-            return '⚡' if name.lower().endswith('.json') else '📋'
-        tabs = st.tabs([f"{_tab_icon(n)} {n[:20]}{'…' if len(n)>20 else ''}" for n in file_names])
-        for tab, name in zip(tabs, file_names):
-            with tab:
-                render_file_view(name)
 
-    # After a new file is added, click the last tab so it becomes active.
-    # The flag is cleared here so the click fires exactly once.
-    if st.session_state.focus_new_tab and len(file_names) > 1:
-        st.session_state.focus_new_tab = False
-        st.components.v1.html(
-            """<script>
-            (function() {
-                var tabs = window.parent.document.querySelectorAll('[data-baseweb="tab"]');
-                if (tabs.length > 0) {
-                    tabs[tabs.length - 1].dispatchEvent(
-                        new MouseEvent('click', {bubbles: true, cancelable: true})
-                    );
-                }
-            })();
-            </script>""",
-            height=0,
-        )
+    # Ensure active_file is valid
+    if st.session_state.active_file not in st.session_state.files:
+        st.session_state.active_file = file_names[0]
+    active = st.session_state.active_file
+
+    # ── Custom tab bar ────────────────────────────────────────────────────────
+    st.markdown('<div class="tab-bar">', unsafe_allow_html=True)
+    cols = st.columns([6, 1] * len(file_names))
+    close_target = None
+    for i, name in enumerate(file_names):
+        label = f"{_tab_icon(name)} {name[:22]}{'…' if len(name) > 22 else ''}"
+        is_active = name == active
+        tab_class = "tab-bar-active" if is_active else ""
+
+        with cols[i * 2]:
+            st.markdown(f'<div class="{tab_class}">', unsafe_allow_html=True)
+            if st.button(label, key=f"tab_{name}", use_container_width=True):
+                st.session_state.active_file = name
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with cols[i * 2 + 1]:
+            st.markdown('<div class="tab-close">', unsafe_allow_html=True)
+            if st.button("✕", key=f"tabclose_{name}"):
+                close_target = name
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if close_target:
+        del st.session_state.files[close_target]
+        if st.session_state.active_file == close_target:
+            remaining = [n for n in file_names if n != close_target]
+            st.session_state.active_file = remaining[0] if remaining else None
+        st.rerun()
+
+    # ── Render active file ────────────────────────────────────────────────────
+    render_file_view(active)
