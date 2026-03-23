@@ -187,10 +187,10 @@ dialog#json-modal {
     background: #13161e; color: #c9d1e8;
     border: 1px solid #252a38; border-radius: 10px;
     padding: 0; width: min(72vw, 900px); max-height: 80vh;
-    display: flex; flex-direction: column;
     box-shadow: 0 24px 60px rgba(0,0,0,0.6);
     font-family: 'JetBrains Mono', monospace;
 }
+dialog#json-modal[open] { display: flex; flex-direction: column; }
 dialog#json-modal::backdrop {
     background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
 }
@@ -478,10 +478,10 @@ dialog#json-modal {
     background: #13161e; color: #c9d1e8;
     border: 1px solid #252a38; border-radius: 10px;
     padding: 0; width: min(72vw, 900px); max-height: 80vh;
-    display: flex; flex-direction: column;
     box-shadow: 0 24px 60px rgba(0,0,0,0.6);
     font-family: 'JetBrains Mono', monospace;
 }
+dialog#json-modal[open] { display: flex; flex-direction: column; }
 dialog#json-modal::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
 .modal-header {
     display: flex; align-items: center; justify-content: space-between;
