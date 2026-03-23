@@ -697,6 +697,14 @@ if 'active_file' not in st.session_state:
     st.session_state.active_file = None
 if 'closed_files' not in st.session_state:
     st.session_state.closed_files = set()
+if 'pending_toast' not in st.session_state:
+    st.session_state.pending_toast = None
+
+# ── Drain pending toast (must run before any widget so it survives rerun) ─────
+if st.session_state.pending_toast:
+    msg, icon, dur = st.session_state.pending_toast
+    st.toast(msg, icon=icon, duration=dur)
+    st.session_state.pending_toast = None
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -739,10 +747,10 @@ with st.sidebar:
                         st.session_state.files[name] = parse_content(name, content)
                         st.session_state.active_file = name
                         add_to_recent(name, path)
-                        st.toast("Done", icon="✅", duration=3)
+                        st.session_state.pending_toast = ("Done", "✅", 3)
                     except Exception:
                         remove_from_recent(path)
-                        st.toast("Failed to open file", icon="🚨", duration=8)
+                        st.session_state.pending_toast = ("Failed to open file", "🚨", 8)
                 else:
                     st.session_state.active_file = name
                 st.rerun()
