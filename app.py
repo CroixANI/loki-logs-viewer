@@ -643,6 +643,8 @@ def parse_content(name: str, content: str) -> list:
 # ── Session state ─────────────────────────────────────────────────────────────
 if 'files' not in st.session_state:
     st.session_state.files = {}
+if 'focus_new_tab' not in st.session_state:
+    st.session_state.focus_new_tab = False
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -662,8 +664,8 @@ with st.sidebar:
             if f.name not in st.session_state.files:
                 raw = f.read()
                 content = raw.decode("utf-8", errors="replace")
-                # Prepend so the new file becomes tab 0 and is auto-selected
-                st.session_state.files = {f.name: parse_content(f.name, content), **st.session_state.files}
+                st.session_state.files[f.name] = parse_content(f.name, content)
+                st.session_state.focus_new_tab = True
                 cached_path = cache_file(f.name, raw)
                 add_to_recent(f.name, cached_path)
 
@@ -699,8 +701,8 @@ with st.sidebar:
                     try:
                         raw = Path(path).read_bytes()
                         content = raw.decode("utf-8", errors="replace")
-                        # Prepend so the new file becomes tab 0 and is auto-selected
-                        st.session_state.files = {name: parse_content(name, content), **st.session_state.files}
+                        st.session_state.files[name] = parse_content(name, content)
+                        st.session_state.focus_new_tab = True
                         add_to_recent(name, path)
                     except Exception:
                         remove_from_recent(path)
@@ -793,3 +795,21 @@ else:
         for tab, name in zip(tabs, file_names):
             with tab:
                 render_file_view(name)
+
+    # After a new file is added, click the last tab so it becomes active.
+    # The flag is cleared here so the click fires exactly once.
+    if st.session_state.focus_new_tab and len(file_names) > 1:
+        st.session_state.focus_new_tab = False
+        st.components.v1.html(
+            """<script>
+            (function() {
+                var tabs = window.parent.document.querySelectorAll('[data-baseweb="tab"]');
+                if (tabs.length > 0) {
+                    tabs[tabs.length - 1].dispatchEvent(
+                        new MouseEvent('click', {bubbles: true, cancelable: true})
+                    );
+                }
+            })();
+            </script>""",
+            height=0,
+        )
