@@ -1,6 +1,7 @@
 import streamlit as st
 import re
 import json
+import base64
 from datetime import datetime, timezone
 
 # ── Page config ──────────────────────────────────────────────────────────────
@@ -382,11 +383,11 @@ def _render_labels_panel(labels: dict, ts: str) -> str:
         elif k == 'MessageBody':
             raw = str(labels[k])
             preview = escape_html(raw[:60] + ('…' if len(raw) > 60 else ''))
-            # Encode JSON as a data attribute to avoid quote-escaping issues
-            encoded = raw.replace('\\', '\\\\').replace("'", "\\'")
+            # Base64-encode so the value is safe inside any HTML attribute
+            b64 = base64.b64encode(raw.encode('utf-8')).decode('ascii')
             eye_btn = (
                 f'<button class="eye-btn" title="View JSON" '
-                f"onclick=\"showJson('{encoded}')\">{_EYE_ICON}</button>"
+                f"onclick=\"showJson('{b64}')\">{_EYE_ICON}</button>"
             )
             val_html = f'<span style="opacity:0.7">{preview}</span>{eye_btn}'
         else:
@@ -534,7 +535,8 @@ function colorizeJson(raw) {
           return '<span class="jn">' + m + '</span>';
         });
 }
-function showJson(raw) {
+function showJson(b64) {
+    var raw = atob(b64);
     document.getElementById('json-content').innerHTML = colorizeJson(raw);
     document.getElementById('json-modal').showModal();
 }
