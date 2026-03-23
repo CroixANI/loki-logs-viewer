@@ -2,6 +2,8 @@ import streamlit as st
 import re
 import json
 import base64
+import shutil
+from pathlib import Path
 from datetime import datetime, timezone
 
 # ── Page config ──────────────────────────────────────────────────────────────
@@ -124,6 +126,24 @@ div[data-testid="stButton"] button:hover {
 }
 .empty-icon { font-size: 3rem; opacity: 0.35; }
 .empty-text { font-size: 0.9rem; }
+
+/* ── Recent file link buttons ───────────────────────────────────────────── */
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"] {
+    background: none !important;
+    border: none !important;
+    padding: 2px 0 !important;
+    color: #5b8af5 !important;
+    font-size: 0.75rem !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    box-shadow: none !important;
+}
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover {
+    color: #a78bfa !important;
+    text-decoration: underline !important;
+    background: none !important;
+    border: none !important;
+}
 
 /* ── Expandable log rows (Loki labels) ──────────────────────────────────── */
 details.log-entry { list-style: none; }
@@ -581,6 +601,45 @@ def render_log_lines(entries: list, search_term: str, max_lines: int = 3000) -> 
     parts.append('</div>')
     return ''.join(parts)
 
+# ── Recent files persistence ──────────────────────────────────────────────────
+_RECENT_MAX = 5
+
+def _loglens_dir() -> Path:
+    d = Path.home() / '.loglens'
+    (d / 'cache').mkdir(parents=True, exist_ok=True)
+    return d
+
+def load_recent() -> list:
+    try:
+        return json.loads((_loglens_dir() / 'recent_files.json').read_text())
+    except Exception:
+        return []
+
+def save_recent(items: list) -> None:
+    (_loglens_dir() / 'recent_files.json').write_text(json.dumps(items))
+
+def add_to_recent(name: str, cached_path: str) -> None:
+    items = [i for i in load_recent() if i['name'] != name]
+    items.insert(0, {'name': name, 'path': cached_path})
+    save_recent(items[:_RECENT_MAX])
+
+def remove_from_recent(cached_path: str) -> None:
+    save_recent([i for i in load_recent() if i['path'] != cached_path])
+
+def cache_file(name: str, raw_bytes: bytes) -> str:
+    dest = _loglens_dir() / 'cache' / name
+    dest.write_bytes(raw_bytes)
+    return str(dest)
+
+def parse_content(name: str, content: str) -> list:
+    if name.lower().endswith('.json'):
+        entries = parse_loki_json(content)
+        if entries is None:
+            entries = parse_file(content)
+    else:
+        entries = parse_file(content)
+    return entries
+
 # ── Session state ─────────────────────────────────────────────────────────────
 if 'files' not in st.session_state:
     st.session_state.files = {}
@@ -601,15 +660,11 @@ with st.sidebar:
     if uploaded:
         for f in uploaded:
             if f.name not in st.session_state.files:
-                content = f.read().decode("utf-8", errors="replace")
-                if f.name.lower().endswith('.json'):
-                    entries = parse_loki_json(content)
-                    if entries is None:
-                        # Not a Loki file — fall back to plain-text parsing
-                        entries = parse_file(content)
-                else:
-                    entries = parse_file(content)
-                st.session_state.files[f.name] = entries
+                raw = f.read()
+                content = raw.decode("utf-8", errors="replace")
+                st.session_state.files[f.name] = parse_content(f.name, content)
+                cached_path = cache_file(f.name, raw)
+                add_to_recent(f.name, cached_path)
 
     if st.session_state.files:
         st.divider()
@@ -629,6 +684,26 @@ with st.sidebar:
         for name in to_close:
             del st.session_state.files[name]
             st.rerun()
+
+    # ── Recent files ──────────────────────────────────────────────────────────
+    recent = load_recent()
+    if recent:
+        st.divider()
+        st.markdown("**Recent**")
+        for item in recent:
+            name, path = item['name'], item['path']
+            label = name[:24] + ('…' if len(name) > 24 else '')
+            if st.button(label, key=f"recent_{path}", help=path, use_container_width=True):
+                if name not in st.session_state.files:
+                    try:
+                        raw = Path(path).read_bytes()
+                        content = raw.decode("utf-8", errors="replace")
+                        st.session_state.files[name] = parse_content(name, content)
+                        add_to_recent(name, path)
+                    except Exception:
+                        remove_from_recent(path)
+                        st.toast("Failed to open file", icon="🚨", duration=8)
+                st.rerun()
 
     st.divider()
     st.markdown('<span style="color:var(--muted);font-size:0.7rem;">LogLens v1.0 · Python + Streamlit</span>', unsafe_allow_html=True)
