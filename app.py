@@ -171,6 +171,59 @@ details.log-entry[open] .expand-arrow { transform: rotate(90deg); color: var(--a
 }
 .label-row-alt .label-key,
 .label-row-alt .label-val { background: rgba(255,255,255,0.02); }
+
+/* ── Eye button ─────────────────────────────────────────────────────────── */
+.eye-btn {
+    background: none; border: none; padding: 0 0 0 0.4rem;
+    cursor: pointer; color: #505878; line-height: 1;
+    vertical-align: middle; flex-shrink: 0;
+    transition: color 0.15s ease;
+}
+.eye-btn:hover { color: #5b8af5; }
+.eye-btn svg { display: block; }
+
+/* ── JSON modal ─────────────────────────────────────────────────────────── */
+dialog#json-modal {
+    background: #13161e; color: #c9d1e8;
+    border: 1px solid #252a38; border-radius: 10px;
+    padding: 0; width: min(72vw, 900px); max-height: 80vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    font-family: 'JetBrains Mono', monospace;
+}
+dialog#json-modal::backdrop {
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
+}
+.modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.7rem 1rem; border-bottom: 1px solid #252a38;
+    font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 600;
+    flex-shrink: 0;
+}
+.modal-title { color: #a78bfa; letter-spacing: 0.02em; }
+.modal-close {
+    background: none; border: none; color: #505878; font-size: 1rem;
+    cursor: pointer; padding: 2px 6px; border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+.modal-close:hover { color: #c9d1e8; background: #1a1e2a; }
+.modal-body {
+    overflow-y: auto; padding: 1rem;
+    flex: 1;
+}
+.modal-body::-webkit-scrollbar { width: 5px; }
+.modal-body::-webkit-scrollbar-track { background: #0d0f14; }
+.modal-body::-webkit-scrollbar-thumb { background: #252a38; border-radius: 4px; }
+pre#json-content {
+    margin: 0; font-size: 0.76rem; line-height: 1.7;
+    white-space: pre-wrap; word-break: break-all;
+}
+/* JSON syntax colours */
+.jk { color: #a78bfa; }   /* key    */
+.js { color: #34d399; }   /* string */
+.jn { color: #fbbf24; }   /* number */
+.jb { color: #60a5fa; }   /* bool   */
+.jz { color: #505878; }   /* null   */
 </style>
 """, unsafe_allow_html=True)
 
@@ -298,6 +351,14 @@ _LABEL_PRIORITY = [
     'deployment_environment', 'service_namespace', 'cluster_id',
 ]
 
+_EYE_ICON = (
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" '
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>'
+    '<circle cx="12" cy="12" r="3"/>'
+    '</svg>'
+)
+
 def _render_labels_panel(labels: dict, ts: str) -> str:
     # Build ordered list: timestamp first, then priority keys, then the rest
     ordered_keys = ['_timestamp']
@@ -313,17 +374,67 @@ def _render_labels_panel(labels: dict, ts: str) -> str:
 
     rows = []
     for idx, k in enumerate(ordered_keys):
-        val = ts if k == '_timestamp' else escape_html(str(labels[k]))
-        key_display = 'timestamp' if k == '_timestamp' else escape_html(k)
         alt = ' label-row-alt' if idx % 2 == 1 else ''
+        key_display = 'timestamp' if k == '_timestamp' else escape_html(k)
+
+        if k == '_timestamp':
+            val_html = ts
+        elif k == 'MessageBody':
+            raw = str(labels[k])
+            preview = escape_html(raw[:60] + ('…' if len(raw) > 60 else ''))
+            # Encode JSON as a data attribute to avoid quote-escaping issues
+            encoded = raw.replace('\\', '\\\\').replace("'", "\\'")
+            eye_btn = (
+                f'<button class="eye-btn" title="View JSON" '
+                f"onclick=\"showJson('{encoded}')\">{_EYE_ICON}</button>"
+            )
+            val_html = f'<span style="opacity:0.7">{preview}</span>{eye_btn}'
+        else:
+            val_html = escape_html(str(labels[k]))
+
         rows.append(
             f'<span class="label-key{alt}">{key_display}</span>'
-            f'<span class="label-val{alt}">{val}</span>'
+            f'<span class="label-val{alt}" style="display:flex;align-items:center;gap:0.2rem">{val_html}</span>'
         )
     return f'<div class="labels-panel">{"".join(rows)}</div>'
 
+_MODAL_AND_JS = """
+<dialog id="json-modal">
+  <div class="modal-header">
+    <span class="modal-title">MessageBody</span>
+    <button class="modal-close" onclick="document.getElementById('json-modal').close()">&#10005;</button>
+  </div>
+  <div class="modal-body"><pre id="json-content"></pre></div>
+</dialog>
+<script>
+function colorizeJson(raw) {
+    var str;
+    try { str = JSON.stringify(JSON.parse(raw), null, 2); } catch(e) { return raw; }
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        function(m) {
+          if (/^"/.test(m)) {
+            return /:$/.test(m)
+              ? '<span class="jk">' + m + '</span>'
+              : '<span class="js">' + m + '</span>';
+          }
+          if (/true|false/.test(m)) return '<span class="jb">' + m + '</span>';
+          if (/null/.test(m))       return '<span class="jz">' + m + '</span>';
+          return '<span class="jn">' + m + '</span>';
+        });
+}
+function showJson(raw) {
+    document.getElementById('json-content').innerHTML = colorizeJson(raw);
+    document.getElementById('json-modal').showModal();
+}
+document.getElementById('json-modal').addEventListener('click', function(e) {
+    if (e.target === this) this.close();
+});
+</script>
+"""
+
 def render_log_lines(entries: list, search_term: str, max_lines: int = 3000) -> str:
-    parts = ['<div class="log-container">']
+    parts = [_MODAL_AND_JS, '<div class="log-container">']
     for i, e in enumerate(entries):
         if i >= max_lines:
             parts.append(f'<div style="color:var(--muted);padding:8px 4px;font-size:0.72rem;">⚠ Showing first {max_lines:,} matching lines — refine filters to see more.</div>')
@@ -338,7 +449,6 @@ def render_log_lines(entries: list, search_term: str, max_lines: int = 3000) -> 
         )
 
         if 'labels' in e:
-            # Loki entry — render as expandable <details>
             labels_html = _render_labels_panel(e['labels'], e.get('ts', ''))
             parts.append(
                 f'<details class="log-entry">'
@@ -350,7 +460,6 @@ def render_log_lines(entries: list, search_term: str, max_lines: int = 3000) -> 
                 f'</details>'
             )
         else:
-            # Plain-text entry — render as before
             parts.append(
                 f'<div class="log-line">'
                 f'{summary_inner}'
@@ -473,8 +582,8 @@ def render_file_view(name: str):
             unsafe_allow_html=True
         )
 
-    # Render log
-    st.markdown(render_log_lines(filtered, highlight_term), unsafe_allow_html=True)
+    # Render log (components.v1.html allows JS for the modal)
+    st.components.v1.html(render_log_lines(filtered, highlight_term), height=600, scrolling=False)
 
 # ── Dispatch ──────────────────────────────────────────────────────────────────
 if not st.session_state.files:
