@@ -123,6 +123,54 @@ div[data-testid="stButton"] button:hover {
 }
 .empty-icon { font-size: 3rem; opacity: 0.35; }
 .empty-text { font-size: 0.9rem; }
+
+/* ── Expandable log rows (Loki labels) ──────────────────────────────────── */
+details.log-entry { list-style: none; }
+details.log-entry > summary {
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    padding: 1px 4px; border-radius: 3px;
+    cursor: pointer; list-style: none;
+}
+details.log-entry > summary::-webkit-details-marker { display: none; }
+details.log-entry > summary::marker { display: none; }
+details.log-entry > summary:hover { background: rgba(255,255,255,0.03); }
+details.log-entry[open] > summary { background: rgba(91,138,245,0.07); border-radius: 3px 3px 0 0; }
+
+.expand-arrow {
+    color: var(--muted); font-size: 0.6rem; padding-top: 5px;
+    flex-shrink: 0; width: 0.7rem; text-align: center;
+    transition: transform 0.15s ease;
+    user-select: none;
+}
+details.log-entry[open] .expand-arrow { transform: rotate(90deg); color: var(--accent); }
+
+.labels-panel {
+    margin: 0 0 4px 4.8rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 0.5rem 0.8rem;
+    display: grid;
+    grid-template-columns: minmax(160px, max-content) 1fr;
+    gap: 0 1.2rem;
+    font-size: 0.72rem;
+}
+.label-key {
+    color: var(--accent2);
+    font-weight: 600;
+    padding: 2px 0;
+    white-space: nowrap;
+    user-select: text;
+}
+.label-val {
+    color: var(--text);
+    padding: 2px 0;
+    word-break: break-all;
+    user-select: text;
+}
+.label-row-alt .label-key,
+.label-row-alt .label-val { background: rgba(255,255,255,0.02); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -227,7 +275,13 @@ def parse_loki_json(content: str) -> list | None:
             prefix = ' '.join(prefix_parts)
 
             entry_num += 1
-            result.append({'num': entry_num, 'text': f'{prefix} {message}', 'level': level})
+            result.append({
+                'num':    entry_num,
+                'text':   f'{prefix} {message}',
+                'level':  level,
+                'labels': labels,      # full stream labels for expanded view
+                'ts':     ts,          # formatted timestamp for label panel
+            })
 
     return result if result else None
 
@@ -236,6 +290,37 @@ def count_levels(entries: list) -> dict:
     for e in entries:
         counts[e['level']] = counts.get(e['level'], 0) + 1
     return counts
+
+# Labels shown first in the expanded panel (if present), rest follow alphabetically
+_LABEL_PRIORITY = [
+    'service_name', 'service_instance_id', 'severity_text', 'detected_level',
+    'scope_name', 'TraceId', 'SpanId', 'RequestPath', 'ActionName',
+    'deployment_environment', 'service_namespace', 'cluster_id',
+]
+
+def _render_labels_panel(labels: dict, ts: str) -> str:
+    # Build ordered list: timestamp first, then priority keys, then the rest
+    ordered_keys = ['_timestamp']
+    seen = {'_timestamp'}
+    for k in _LABEL_PRIORITY:
+        if k in labels and k not in seen:
+            ordered_keys.append(k)
+            seen.add(k)
+    for k in sorted(labels.keys()):
+        if k not in seen:
+            ordered_keys.append(k)
+            seen.add(k)
+
+    rows = []
+    for idx, k in enumerate(ordered_keys):
+        val = ts if k == '_timestamp' else escape_html(str(labels[k]))
+        key_display = 'timestamp' if k == '_timestamp' else escape_html(k)
+        alt = ' label-row-alt' if idx % 2 == 1 else ''
+        rows.append(
+            f'<span class="label-key{alt}">{key_display}</span>'
+            f'<span class="label-val{alt}">{val}</span>'
+        )
+    return f'<div class="labels-panel">{"".join(rows)}</div>'
 
 def render_log_lines(entries: list, search_term: str, max_lines: int = 3000) -> str:
     parts = ['<div class="log-container">']
@@ -246,12 +331,31 @@ def render_log_lines(entries: list, search_term: str, max_lines: int = 3000) -> 
         safe = escape_html(e['text'])
         if search_term:
             safe = highlight_text(safe, search_term)
-        parts.append(
-            f'<div class="log-line">'
+
+        summary_inner = (
             f'<span class="line-num">{e["num"]}</span>'
             f'<span class="line-text level-{e["level"]}">{safe or "&nbsp;"}</span>'
-            f'</div>'
         )
+
+        if 'labels' in e:
+            # Loki entry — render as expandable <details>
+            labels_html = _render_labels_panel(e['labels'], e.get('ts', ''))
+            parts.append(
+                f'<details class="log-entry">'
+                f'<summary>'
+                f'<span class="expand-arrow">&#9658;</span>'
+                f'{summary_inner}'
+                f'</summary>'
+                f'{labels_html}'
+                f'</details>'
+            )
+        else:
+            # Plain-text entry — render as before
+            parts.append(
+                f'<div class="log-line">'
+                f'{summary_inner}'
+                f'</div>'
+            )
     parts.append('</div>')
     return ''.join(parts)
 
