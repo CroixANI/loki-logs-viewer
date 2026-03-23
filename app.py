@@ -129,6 +129,9 @@ div[data-testid="stButton"] button:hover {
 
 /* ── Hide native uploader file list ─────────────────────────────────────── */
 [data-testid="stFileUploaderFileList"] { display: none !important; }
+[data-testid="stFileUploaderFile"] { display: none !important; }
+[data-testid="stFileUploader"] ul { display: none !important; }
+[data-testid="stFileUploader"] li { display: none !important; }
 
 /* ── Custom tab bar ─────────────────────────────────────────────────────── */
 .tab-bar {
