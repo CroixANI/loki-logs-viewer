@@ -662,7 +662,8 @@ with st.sidebar:
             if f.name not in st.session_state.files:
                 raw = f.read()
                 content = raw.decode("utf-8", errors="replace")
-                st.session_state.files[f.name] = parse_content(f.name, content)
+                # Prepend so the new file becomes tab 0 and is auto-selected
+                st.session_state.files = {f.name: parse_content(f.name, content), **st.session_state.files}
                 cached_path = cache_file(f.name, raw)
                 add_to_recent(f.name, cached_path)
 
@@ -698,7 +699,8 @@ with st.sidebar:
                     try:
                         raw = Path(path).read_bytes()
                         content = raw.decode("utf-8", errors="replace")
-                        st.session_state.files[name] = parse_content(name, content)
+                        # Prepend so the new file becomes tab 0 and is auto-selected
+                        st.session_state.files = {name: parse_content(name, content), **st.session_state.files}
                         add_to_recent(name, path)
                     except Exception:
                         remove_from_recent(path)
