@@ -695,6 +695,8 @@ if 'files' not in st.session_state:
     st.session_state.files = {}
 if 'active_file' not in st.session_state:
     st.session_state.active_file = None
+if 'closed_files' not in st.session_state:
+    st.session_state.closed_files = set()
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -711,7 +713,7 @@ with st.sidebar:
 
     if uploaded:
         for f in uploaded:
-            if f.name not in st.session_state.files:
+            if f.name not in st.session_state.files and f.name not in st.session_state.closed_files:
                 raw = f.read()
                 content = raw.decode("utf-8", errors="replace")
                 st.session_state.files[f.name] = parse_content(f.name, content)
@@ -732,6 +734,7 @@ with st.sidebar:
                     try:
                         raw = Path(path).read_bytes()
                         content = raw.decode("utf-8", errors="replace")
+                        st.session_state.closed_files.discard(name)
                         st.session_state.files[name] = parse_content(name, content)
                         st.session_state.active_file = name
                         add_to_recent(name, path)
@@ -856,6 +859,7 @@ else:
 
     if close_target:
         del st.session_state.files[close_target]
+        st.session_state.closed_files.add(close_target)
         if st.session_state.active_file == close_target:
             remaining = [n for n in file_names if n != close_target]
             st.session_state.active_file = remaining[0] if remaining else None
