@@ -398,7 +398,118 @@ def _render_labels_panel(labels: dict, ts: str) -> str:
         )
     return f'<div class="labels-panel">{"".join(rows)}</div>'
 
-_MODAL_AND_JS = """
+_IFRAME_HEAD = """
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background: #0d0f14; color: #c9d1e8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.76rem; line-height: 1.7;
+    overflow: hidden;
+}
+.log-container {
+    background: #13161e; border: 1px solid #252a38;
+    border-radius: 10px; padding: 1rem;
+    height: calc(100vh - 4px); overflow-y: auto;
+}
+.log-container::-webkit-scrollbar { width: 5px; }
+.log-container::-webkit-scrollbar-track { background: #0d0f14; }
+.log-container::-webkit-scrollbar-thumb { background: #252a38; border-radius: 4px; }
+
+.log-line { display: flex; align-items: flex-start; gap: 0.6rem; padding: 1px 4px; border-radius: 3px; }
+.log-line:hover { background: rgba(255,255,255,0.03); }
+.line-num { color: #505878; min-width: 3.5rem; text-align: right; user-select: none; font-size: 0.68rem; padding-top: 2px; flex-shrink: 0; }
+.line-text { flex: 1; white-space: pre-wrap; word-break: break-all; }
+
+.level-ERROR, .level-CRITICAL, .level-FATAL { color: #f87171; }
+.level-WARN, .level-WARNING { color: #fbbf24; }
+.level-INFO  { color: #34d399; }
+.level-DEBUG { color: #60a5fa; }
+.level-TRACE { color: #a78bfa; }
+.level-DEFAULT { color: #c9d1e8; }
+
+.highlight { background: rgba(251,191,36,0.3); border-radius: 2px; padding: 0 2px; color: #000 !important; }
+
+/* Expandable rows */
+details.log-entry { list-style: none; }
+details.log-entry > summary {
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    padding: 1px 4px; border-radius: 3px;
+    cursor: pointer; list-style: none;
+}
+details.log-entry > summary::-webkit-details-marker { display: none; }
+details.log-entry > summary::marker { display: none; }
+details.log-entry > summary:hover { background: rgba(255,255,255,0.03); }
+details.log-entry[open] > summary { background: rgba(91,138,245,0.07); border-radius: 3px 3px 0 0; }
+.expand-arrow {
+    color: #505878; font-size: 0.6rem; padding-top: 5px;
+    flex-shrink: 0; width: 0.7rem; text-align: center;
+    transition: transform 0.15s ease; user-select: none;
+}
+details.log-entry[open] .expand-arrow { transform: rotate(90deg); color: #5b8af5; }
+
+/* Labels panel */
+.labels-panel {
+    margin: 0 0 4px 4.8rem;
+    background: #1a1e2a; border: 1px solid #252a38; border-top: none;
+    border-radius: 0 0 6px 6px; padding: 0.5rem 0.8rem;
+    display: grid; grid-template-columns: minmax(160px, max-content) 1fr;
+    gap: 0 1.2rem; font-size: 0.72rem;
+}
+.label-key { color: #a78bfa; font-weight: 600; padding: 2px 0; white-space: nowrap; user-select: text; }
+.label-val { color: #c9d1e8; padding: 2px 0; word-break: break-all; user-select: text; display: flex; align-items: center; gap: 0.2rem; }
+.label-row-alt .label-key,
+.label-row-alt .label-val { background: rgba(255,255,255,0.02); }
+
+/* Eye button */
+.eye-btn {
+    background: none; border: none; padding: 0 0 0 0.4rem;
+    cursor: pointer; color: #505878; line-height: 1;
+    vertical-align: middle; flex-shrink: 0;
+    transition: color 0.15s ease;
+}
+.eye-btn:hover { color: #5b8af5; }
+.eye-btn svg { display: block; }
+
+/* JSON modal */
+dialog#json-modal {
+    background: #13161e; color: #c9d1e8;
+    border: 1px solid #252a38; border-radius: 10px;
+    padding: 0; width: min(72vw, 900px); max-height: 80vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    font-family: 'JetBrains Mono', monospace;
+}
+dialog#json-modal::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); }
+.modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.7rem 1rem; border-bottom: 1px solid #252a38;
+    font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 600; flex-shrink: 0;
+}
+.modal-title { color: #a78bfa; letter-spacing: 0.02em; }
+.modal-close {
+    background: none; border: none; color: #505878; font-size: 1rem;
+    cursor: pointer; padding: 2px 6px; border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+.modal-close:hover { color: #c9d1e8; background: #1a1e2a; }
+.modal-body { overflow-y: auto; padding: 1rem; flex: 1; }
+.modal-body::-webkit-scrollbar { width: 5px; }
+.modal-body::-webkit-scrollbar-track { background: #0d0f14; }
+.modal-body::-webkit-scrollbar-thumb { background: #252a38; border-radius: 4px; }
+pre#json-content { margin: 0; font-size: 0.76rem; line-height: 1.7; white-space: pre-wrap; word-break: break-all; }
+.jk { color: #a78bfa; }
+.js { color: #34d399; }
+.jn { color: #fbbf24; }
+.jb { color: #60a5fa; }
+.jz { color: #505878; }
+
+/* Truncation notice */
+.trunc-notice { color: #505878; padding: 8px 4px; font-size: 0.72rem; }
+</style>
+
 <dialog id="json-modal">
   <div class="modal-header">
     <span class="modal-title">MessageBody</span>
@@ -411,7 +522,7 @@ function colorizeJson(raw) {
     var str;
     try { str = JSON.stringify(JSON.parse(raw), null, 2); } catch(e) { return raw; }
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\\s*:)?|\\b(true|false|null)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)/g,
         function(m) {
           if (/^"/.test(m)) {
             return /:$/.test(m)
@@ -434,10 +545,10 @@ document.getElementById('json-modal').addEventListener('click', function(e) {
 """
 
 def render_log_lines(entries: list, search_term: str, max_lines: int = 3000) -> str:
-    parts = [_MODAL_AND_JS, '<div class="log-container">']
+    parts = [_IFRAME_HEAD, '<div class="log-container">']
     for i, e in enumerate(entries):
         if i >= max_lines:
-            parts.append(f'<div style="color:var(--muted);padding:8px 4px;font-size:0.72rem;">⚠ Showing first {max_lines:,} matching lines — refine filters to see more.</div>')
+            parts.append(f'<div class="trunc-notice">⚠ Showing first {max_lines:,} matching lines — refine filters to see more.</div>')
             break
         safe = escape_html(e['text'])
         if search_term:
