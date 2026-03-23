@@ -720,6 +720,7 @@ with st.sidebar:
                 st.session_state.active_file = f.name
                 cached_path = cache_file(f.name, raw)
                 add_to_recent(f.name, cached_path)
+                st.toast("Done", icon="✅", duration=3)
 
     # ── Recent files ──────────────────────────────────────────────────────────
     recent = load_recent()
@@ -738,6 +739,7 @@ with st.sidebar:
                         st.session_state.files[name] = parse_content(name, content)
                         st.session_state.active_file = name
                         add_to_recent(name, path)
+                        st.toast("Done", icon="✅", duration=3)
                     except Exception:
                         remove_from_recent(path)
                         st.toast("Failed to open file", icon="🚨", duration=8)
