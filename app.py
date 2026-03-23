@@ -51,14 +51,14 @@ header[data-testid="stHeader"] { display: none; }
 .app-title {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
-    font-size: 1.8rem;
+    font-size: 1.89rem;
     letter-spacing: -0.02em;
     background: linear-gradient(135deg, #5b8af5, #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 0.1rem;
 }
-.app-subtitle { color: var(--muted); font-size: 0.8rem; margin-bottom: 1.2rem; }
+.app-subtitle { color: var(--muted); font-size: 1.00rem; margin-bottom: 1.2rem; }
 
 .log-container {
     background: var(--surface);
@@ -68,8 +68,8 @@ header[data-testid="stHeader"] { display: none; }
     height: 60vh;
     overflow-y: auto;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.76rem;
-    line-height: 1.7;
+    font-size: 0.95rem;
+    line-height: 1.75;
 }
 .log-container::-webkit-scrollbar { width: 5px; }
 .log-container::-webkit-scrollbar-track { background: var(--bg); }
@@ -77,7 +77,7 @@ header[data-testid="stHeader"] { display: none; }
 
 .log-line { display: flex; align-items: flex-start; gap: 0.6rem; padding: 1px 4px; border-radius: 3px; }
 .log-line:hover { background: rgba(255,255,255,0.03); }
-.line-num { color: var(--muted); min-width: 3.5rem; text-align: right; user-select: none; font-size: 0.68rem; padding-top: 2px; flex-shrink: 0; }
+.line-num { color: var(--muted); min-width: 3.5rem; text-align: right; user-select: none; font-size: 0.84rem; padding-top: 2px; flex-shrink: 0; }
 .line-text { flex: 1; white-space: pre-wrap; word-break: break-all; }
 
 .level-ERROR, .level-CRITICAL, .level-FATAL { color: #f87171; }
@@ -94,8 +94,8 @@ header[data-testid="stHeader"] { display: none; }
     background: var(--surface2); border: 1px solid var(--border);
     border-radius: 8px; margin-bottom: 0.8rem; flex-wrap: wrap; align-items: center;
 }
-.stat-pill { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; }
-.stat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.stat-pill { display: flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; }
+.stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .stat-count { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
 
 div[data-testid="stTextInput"] input {
@@ -104,7 +104,7 @@ div[data-testid="stTextInput"] input {
     color: var(--text) !important;
     border-radius: 7px !important;
     font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.82rem !important;
+    font-size: 1.00rem !important;
 }
 
 div[data-testid="stButton"] button {
@@ -113,7 +113,7 @@ div[data-testid="stButton"] button {
     color: var(--text) !important;
     border-radius: 7px !important;
     font-family: 'Syne', sans-serif !important;
-    font-size: 0.78rem !important;
+    font-size: 0.95rem !important;
 }
 div[data-testid="stButton"] button:hover {
     border-color: var(--accent) !important;
@@ -125,7 +125,16 @@ div[data-testid="stButton"] button:hover {
     height: 40vh; color: var(--muted); gap: 0.6rem;
 }
 .empty-icon { font-size: 3rem; opacity: 0.35; }
-.empty-text { font-size: 0.9rem; }
+.empty-text { font-size: 1.10rem; }
+
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
+div[data-testid="stTabs"] button[data-baseweb="tab"] {
+    font-size: 1.05rem !important;
+    padding: 0.5rem 1rem !important;
+}
+div[data-testid="stTabs"] button[data-baseweb="tab"] p {
+    font-size: 1.05rem !important;
+}
 
 /* ── Recent file link buttons ───────────────────────────────────────────── */
 section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"] {
@@ -133,7 +142,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="second
     border: none !important;
     padding: 2px 0 !important;
     color: #5b8af5 !important;
-    font-size: 0.75rem !important;
+    font-size: 0.92rem !important;
     text-align: left !important;
     justify-content: flex-start !important;
     box-shadow: none !important;
@@ -158,8 +167,8 @@ details.log-entry > summary:hover { background: rgba(255,255,255,0.03); }
 details.log-entry[open] > summary { background: rgba(91,138,245,0.07); border-radius: 3px 3px 0 0; }
 
 .expand-arrow {
-    color: var(--muted); font-size: 0.6rem; padding-top: 5px;
-    flex-shrink: 0; width: 0.7rem; text-align: center;
+    color: var(--muted); font-size: 0.76rem; padding-top: 5px;
+    flex-shrink: 0; width: 0.8rem; text-align: center;
     transition: transform 0.15s ease;
     user-select: none;
 }
@@ -175,7 +184,7 @@ details.log-entry[open] .expand-arrow { transform: rotate(90deg); color: var(--a
     display: grid;
     grid-template-columns: minmax(160px, max-content) 1fr;
     gap: 0 1.2rem;
-    font-size: 0.72rem;
+    font-size: 0.89rem;
 }
 .label-key {
     color: var(--accent2);
@@ -427,7 +436,7 @@ _IFRAME_HEAD = """
 body {
     background: #0d0f14; color: #c9d1e8;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.76rem; line-height: 1.7;
+    font-size: 0.95rem; line-height: 1.75;
     overflow: hidden;
 }
 .log-container {
@@ -441,7 +450,7 @@ body {
 
 .log-line { display: flex; align-items: flex-start; gap: 0.6rem; padding: 1px 4px; border-radius: 3px; }
 .log-line:hover { background: rgba(255,255,255,0.03); }
-.line-num { color: #505878; min-width: 3.5rem; text-align: right; user-select: none; font-size: 0.68rem; padding-top: 2px; flex-shrink: 0; }
+.line-num { color: #505878; min-width: 3.5rem; text-align: right; user-select: none; font-size: 0.84rem; padding-top: 2px; flex-shrink: 0; }
 .line-text { flex: 1; white-space: pre-wrap; word-break: break-all; }
 
 .level-ERROR, .level-CRITICAL, .level-FATAL { color: #f87171; }
@@ -465,8 +474,8 @@ details.log-entry > summary::marker { display: none; }
 details.log-entry > summary:hover { background: rgba(255,255,255,0.03); }
 details.log-entry[open] > summary { background: rgba(91,138,245,0.07); border-radius: 3px 3px 0 0; }
 .expand-arrow {
-    color: #505878; font-size: 0.6rem; padding-top: 5px;
-    flex-shrink: 0; width: 0.7rem; text-align: center;
+    color: #505878; font-size: 0.76rem; padding-top: 5px;
+    flex-shrink: 0; width: 0.8rem; text-align: center;
     transition: transform 0.15s ease; user-select: none;
 }
 details.log-entry[open] .expand-arrow { transform: rotate(90deg); color: #5b8af5; }
@@ -477,7 +486,7 @@ details.log-entry[open] .expand-arrow { transform: rotate(90deg); color: #5b8af5
     background: #1a1e2a; border: 1px solid #252a38; border-top: none;
     border-radius: 0 0 6px 6px; padding: 0.5rem 0.8rem;
     display: grid; grid-template-columns: minmax(160px, max-content) 1fr;
-    gap: 0 1.2rem; font-size: 0.72rem;
+    gap: 0 1.2rem; font-size: 0.89rem;
 }
 .label-key { color: #a78bfa; font-weight: 600; padding: 2px 0; white-space: nowrap; user-select: text; }
 .label-val { color: #c9d1e8; padding: 2px 0; word-break: break-all; user-select: text; display: flex; align-items: center; gap: 0.2rem; }
@@ -507,7 +516,7 @@ dialog#json-modal::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blu
 .modal-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 0.7rem 1rem; border-bottom: 1px solid #252a38;
-    font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 600; flex-shrink: 0;
+    font-family: 'Syne', sans-serif; font-size: 1.00rem; font-weight: 600; flex-shrink: 0;
 }
 .modal-title { color: #a78bfa; letter-spacing: 0.02em; }
 .modal-close {
@@ -520,7 +529,7 @@ dialog#json-modal::backdrop { background: rgba(0,0,0,0.55); backdrop-filter: blu
 .modal-body::-webkit-scrollbar { width: 5px; }
 .modal-body::-webkit-scrollbar-track { background: #0d0f14; }
 .modal-body::-webkit-scrollbar-thumb { background: #252a38; border-radius: 4px; }
-pre#json-content { margin: 0; font-size: 0.76rem; line-height: 1.7; white-space: pre-wrap; word-break: break-all; }
+pre#json-content { margin: 0; font-size: 0.95rem; line-height: 1.75; white-space: pre-wrap; word-break: break-all; }
 .jk { color: #a78bfa; }
 .js { color: #34d399; }
 .jn { color: #fbbf24; }
@@ -528,7 +537,7 @@ pre#json-content { margin: 0; font-size: 0.76rem; line-height: 1.7; white-space:
 .jz { color: #505878; }
 
 /* Truncation notice */
-.trunc-notice { color: #505878; padding: 8px 4px; font-size: 0.72rem; }
+.trunc-notice { color: #505878; padding: 8px 4px; font-size: 0.89rem; }
 </style>
 
 <dialog id="json-modal">
@@ -680,7 +689,7 @@ with st.sidebar:
                 counts = count_levels(entries)
                 errors = counts.get('ERROR', 0) + counts.get('CRITICAL', 0)
                 badge = f' 🔴{errors}' if errors else ''
-                st.markdown(f'<div style="font-size:0.78rem;padding:4px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{name}">{name[:22]}{"…" if len(name)>22 else ""}{badge}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="font-size:0.97rem;padding:4px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{name}">{name[:22]}{"…" if len(name)>22 else ""}{badge}</div>', unsafe_allow_html=True)
             with col2:
                 if st.button("✕", key=f"close_{name}"):
                     to_close.append(name)
@@ -710,7 +719,7 @@ with st.sidebar:
                 st.rerun()
 
     st.divider()
-    st.markdown('<span style="color:var(--muted);font-size:0.7rem;">LogLens v1.0 · Python + Streamlit</span>', unsafe_allow_html=True)
+    st.markdown('<span style="color:var(--muted);font-size:0.74rem;">LogLens v1.0 · Python + Streamlit</span>', unsafe_allow_html=True)
 
 # ── Main view ─────────────────────────────────────────────────────────────────
 def render_file_view(name: str):
@@ -769,7 +778,7 @@ def render_file_view(name: str):
     match_count = len(filtered)
     if match_count != total:
         st.markdown(
-            f'<div style="font-size:0.74rem;color:var(--muted);margin-bottom:0.35rem;">'
+            f'<div style="font-size:0.92rem;color:var(--muted);margin-bottom:0.35rem;">'
             f'<b style="color:#5b8af5">{match_count:,}</b> / {total:,} lines match</div>',
             unsafe_allow_html=True
         )
@@ -783,7 +792,7 @@ if not st.session_state.files:
     <div class="empty-state">
         <div class="empty-icon">📂</div>
         <div class="empty-text">Open a log file from the sidebar to get started</div>
-        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem">Supports .log · .txt · .out · .err · .json (Loki)</div>
+        <div style="font-size:0.79rem;color:var(--muted);margin-top:0.3rem">Supports .log · .txt · .out · .err · .json (Loki)</div>
     </div>
     """, unsafe_allow_html=True)
 else:
