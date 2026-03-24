@@ -1,6 +1,18 @@
-# Entry point — assembled in Phase 5 (Orchestration).
-# Run with: streamlit run app.py
 import streamlit as st
 
-st.set_page_config(page_title="Loki Viewer", layout="wide")
-st.info("Loki Viewer — under construction.")
+# Must be the very first Streamlit call.
+st.set_page_config(
+    page_title="Loki Viewer",
+    page_icon="🔭",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+from src.ui.styles import inject_css
+from src.core.state import init_state
+from src.ui.layout import render_sidebar, render_main
+
+inject_css()
+init_state()
+render_sidebar()
+render_main()
