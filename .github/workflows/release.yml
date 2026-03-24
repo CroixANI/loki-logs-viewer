@@ -35,7 +35,7 @@ jobs:
         run: |
           pyinstaller --onefile `
             --name LogLens `
-            --console `
+            --windowed `
             --collect-all streamlit `
             --copy-metadata streamlit `
             --hidden-import streamlit.runtime.scriptrunner.magic_funcs `
