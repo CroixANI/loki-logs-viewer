@@ -1,0 +1,5 @@
+# Desktop packaging dependencies — used in Phase 6 only.
+# Exact versions to be confirmed during Phase 6 implementation.
+-r requirements.txt
+pywebview
+streamlit-desktop-app
