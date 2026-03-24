@@ -29,3 +29,14 @@ The application MUST follow this structure to ensure maintainability:
 ## 6. Dependencies
 - All dependencies must be pinned to exact versions in `requirements.txt` (e.g., `streamlit==1.35.0`).
 - This is essential for reproducible builds across Windows and macOS.
+- Development-only dependencies (e.g., `pytest`) must be listed in `requirements.txt` under a clearly marked `# Development / testing` comment section.
+
+## 7. Unit Tests
+- Every module in `src/core/` and `src/utils/` **must** have a corresponding test file in `tests/`.
+- Test files follow the naming convention `tests/test_<module_name>.py`.
+- Tests must be runnable with `pytest` from the project root: `PYTHONPATH=. pytest tests/`.
+- **What to test:** any pure function that transforms data — parsers, formatters, normalisers, and state action functions with no UI dependency.
+- **What not to test:** functions that call `st.*` Streamlit APIs directly — those require a running Streamlit runtime and are out of scope for unit tests.
+- Use `tests/fixtures/` for reusable test data files (e.g., stub JSON exports). Fixture files must be obfuscated — no real UUIDs, usernames, IP addresses, or proprietary identifiers.
+- Group related assertions into test classes named `Test<Concept>` (e.g., `TestSorting`, `TestEdgeCases`).
+- Each new phase of the implementation plan that introduces testable logic must include unit tests as part of the same feature branch before merging.
