@@ -1,0 +1,16 @@
+.git
+.claude
+.gitignore
+__pycache__
+*.pyc
+venv/
+*.log
+logs-examples/
+tests/
+docs/
+Makefile
+run_app.py
+desktop_config.py
+windows.spec
+requirements-desktop.txt
+README.md

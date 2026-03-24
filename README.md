@@ -1,6 +1,6 @@
-# 🔭 LogLens — Log Viewer
+# 🔭 Loki Viewer
 
-A clean, fast log viewer for structured and plain-text log files, built with Python + Streamlit.
+A clean, fast desktop viewer for Grafana Loki JSON stream exports, built with Python + Streamlit.
 
 ---
 
@@ -8,135 +8,106 @@ A clean, fast log viewer for structured and plain-text log files, built with Pyt
 
 - ⚡ **Grafana Loki JSON support** — open Loki HTTP API query-response files directly
 - 📋 **Multi-file tabs** — open several log files at once with per-tab close buttons
-- 🎨 **Log level coloring** — CRITICAL (orange), ERROR (red), WARN (yellow), INFO (green), DEBUG (blue), TRACE (purple)
-- 🔍 **Search & highlight** — keyword or regex search with match highlighting
-- 📊 **Level filtering** — filter by severity level
-- 📈 **Stats bar** — see line counts and level distribution at a glance
-- ▸ **Expandable Loki rows** — click any row to reveal all stream labels as a key/value panel
-- 👁 **MessageBody JSON viewer** — eye button opens nested JSON formatted and syntax-highlighted in a modal
-- 🕓 **Recent files** — last 5 opened files remembered across sessions, one click to reopen
+- 🎨 **Log level coloring** — ERROR (red), WARN (yellow), INFO (green), DEBUG (blue), TRACE (purple)
+- 🔍 **Search & filter** — keyword or regex search with level filter
+- ▸ **Expandable rows** — click any row to reveal all stream labels as a key/value panel
+- 👁 **MessageBody JSON viewer** — eye button opens nested JSON in a modal
 
 ---
 
-## Running on Windows
+## How to run
 
-### Prerequisites
+### Option 1 — Windows EXE (no Python or Docker required)
 
-1. Install **Python 3.11 or newer** from [python.org](https://python.org/downloads)
-   - During installation check **"Add Python to PATH"**
-2. Download or clone this repository and extract it to a folder of your choice
+1. Go to the [Releases](../../releases) page and download `LokiViewer.exe`
+2. Double-click to run — the app opens in a native window automatically
 
-### Start the app
+> Requires the **WebView2 runtime** (ships with Windows 11 and Edge; for Windows 10 install it from [Microsoft](https://developer.microsoft.com/en-us/microsoft-edge/webview2/))
 
-**Double-click `launch.bat`** — it will:
-1. Verify Python is installed
-2. Install all required packages automatically (first run only)
-3. Start the LogLens server
-4. Open your browser at `http://localhost:8501`
+---
 
-> If your browser does not open automatically, navigate to `http://localhost:8501` manually.
+### Option 2 — Docker (no Python required)
 
-### Stop the app
+**Prerequisites:** Docker Desktop installed and running.
 
-Close the terminal window that opened, or press `Ctrl + C` inside it.
+**Windows** — double-click `launch-docker.bat`
 
-### Manual start (alternative)
+**macOS / Linux**
+```sh
+make up        # build image, start container, open browser
+make down      # stop the container
+make restart   # rebuild and restart
+make logs      # tail container logs
+```
 
-If you prefer the command line:
-
-```cmd
-pip install -r requirements.txt
-streamlit run app.py
+Or with plain Docker Compose:
+```sh
+docker compose up -d --build
+# then open http://localhost:8501
 ```
 
 ---
 
-## Development
+### Option 3 — Run locally (development)
 
-### 1. Create and activate a virtual environment
+**Prerequisites:** Python 3.11+
 
-**macOS / Linux**
+**1. Create and activate a virtual environment**
+
+macOS / Linux:
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-**Windows (Command Prompt)**
+Windows (Command Prompt):
 ```cmd
 python -m venv venv
 venv\Scripts\activate
 ```
 
-**Windows (PowerShell)**
+Windows (PowerShell):
 ```powershell
 python -m venv venv
 venv\Scripts\Activate.ps1
 ```
 
-To deactivate the environment when you are done:
+To deactivate when done:
 ```bash
 deactivate
 ```
 
-### 2. Install dependencies
-
+**2. Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Run the app locally
-
+**3. Run the app**
 ```bash
 streamlit run app.py
 ```
 
 The app opens at `http://localhost:8501` in your browser.
 
-### 4. Run tests
-
+**4. Run tests**
 ```bash
 PYTHONPATH=. pytest tests/ -v
 ```
 
-On Windows:
+Windows:
 ```cmd
 set PYTHONPATH=. && pytest tests/ -v
 ```
 
----
-
-## Supported File Formats
-
-| Extension | Description |
-|---|---|
-| `.json` | Grafana Loki HTTP API query-response (`resultType: streams`) |
-| `.log` | Any text-based log file |
-| `.txt` | Plain text logs |
-| `.out` | Standard output captures |
-| `.err` | Standard error captures |
+Or with Make:
+```bash
+make test
+```
 
 ---
 
 ## Log Level Detection
 
-For plain-text files, LogLens auto-detects severity by scanning each line for keywords:
+Loki JSON files: level is read from the `severity_text`, `detected_level`, `level`, or `severity` stream label (OpenTelemetry conventions supported).
 
-`CRITICAL` / `FATAL` → `ERROR` → `WARN` / `WARNING` → `INFO` → `DEBUG` → `TRACE`
-
-For Loki JSON files, the level is read directly from the `severity_text` or `detected_level` stream label.
-
-Works with Log4j, NLog, Serilog, Python logging, syslog, OpenTelemetry, and most common formats.
-
----
-
-## Data Storage
-
-LogLens stores recent file history and a file cache in `%USERPROFILE%\.loglens\`:
-
-```
-~\.loglens\
-├── recent_files.json   ← list of up to 5 recently opened files
-└── cache\              ← copies of uploaded files for quick reopening
-```
-
-This folder is created automatically on first use.
+Severity order: `ERROR` → `WARN` → `INFO` → `DEBUG` → `TRACE`
