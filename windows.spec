@@ -1,7 +1,7 @@
 # PyInstaller spec for Windows — produces dist/LokiViewer.exe
 #
 # Build command (run from project root with venv active):
-#   pip install pyinstaller pywebview
+#   pip install -r requirements-desktop.txt
 #   pyinstaller windows.spec
 #
 # Requirements:
@@ -9,38 +9,37 @@
 #     Silent installer: https://developer.microsoft.com/en-us/microsoft-edge/webview2/
 #   - PyInstaller 6+
 
-import sys
 from pathlib import Path
-import streamlit
+from PyInstaller.utils.hooks import collect_all, copy_metadata
 
-STREAMLIT_DIR = Path(streamlit.__file__).parent
-PROJECT_ROOT  = Path(SPEC).parent          # noqa: F821  (SPEC is a PyInstaller built-in)
+PROJECT_ROOT = Path(SPEC).parent  # noqa: F821  (SPEC is a PyInstaller built-in)
+
+# collect_all() is equivalent to --collect-all on the CLI.
+# It captures every submodule, data file, and binary for the package —
+# essential for complex packages like streamlit that load modules dynamically.
+st_datas,  st_binaries,  st_hidden  = collect_all('streamlit')
+wv_datas,  wv_binaries,  wv_hidden  = collect_all('webview')
 
 block_cipher = None
 
 a = Analysis(
     [str(PROJECT_ROOT / "run_app.py")],
     pathex=[str(PROJECT_ROOT)],
-    binaries=[],
+    binaries=[] + st_binaries + wv_binaries,
     datas=[
-        # Streamlit static assets (HTML, JS, CSS)
-        (str(STREAMLIT_DIR / "static"),  "streamlit/static"),
-        (str(STREAMLIT_DIR / "runtime"), "streamlit/runtime"),
-        # App assets and source
-        (str(PROJECT_ROOT / "assets"),   "assets"),
-        (str(PROJECT_ROOT / "src"),      "src"),
-        (str(PROJECT_ROOT / "app.py"),   "."),
+        # App source and assets
+        (str(PROJECT_ROOT / "assets"),          "assets"),
+        (str(PROJECT_ROOT / "src"),             "src"),
+        (str(PROJECT_ROOT / "app.py"),          "."),
         (str(PROJECT_ROOT / "desktop_config.py"), "."),
-    ],
+    ] + st_datas + wv_datas
+      + copy_metadata('streamlit'),   # needed for importlib.metadata version checks
     hiddenimports=[
-        "streamlit",
         "streamlit.web.cli",
         "streamlit.runtime.scriptrunner",
         "webview",
         "webview.platforms.edgechromium",
-        # Note: pythonnet (clr) is NOT listed — pywebview 6.x EdgeChromium
-        # backend does not require it and it is not available on CI runners.
-    ],
+    ] + st_hidden + wv_hidden,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
