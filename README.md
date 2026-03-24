@@ -51,6 +51,60 @@ streamlit run app.py
 
 ---
 
+## Development
+
+### 1. Create and activate a virtual environment
+
+**macOS / Linux**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+**Windows (Command Prompt)**
+```cmd
+python -m venv venv
+venv\Scripts\activate
+```
+
+**Windows (PowerShell)**
+```powershell
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
+
+To deactivate the environment when you are done:
+```bash
+deactivate
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run the app locally
+
+```bash
+streamlit run app.py
+```
+
+The app opens at `http://localhost:8501` in your browser.
+
+### 4. Run tests
+
+```bash
+PYTHONPATH=. pytest tests/ -v
+```
+
+On Windows:
+```cmd
+set PYTHONPATH=. && pytest tests/ -v
+```
+
+---
+
 ## Supported File Formats
 
 | Extension | Description |
