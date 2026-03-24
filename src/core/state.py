@@ -13,6 +13,8 @@ def init_state() -> None:
         st.session_state["active_tab"] = None
     if "page_sizes" not in st.session_state:
         st.session_state["page_sizes"] = {}   # filename -> int (rows visible)
+    if "filters" not in st.session_state:
+        st.session_state["filters"] = {}      # filename -> {search, level, use_regex}
 
 
 @st.cache_data(show_spinner=False)
@@ -29,6 +31,7 @@ def add_file(filename: str, file_bytes: bytes) -> None:
     entries = _cached_parse(file_bytes)
     st.session_state["files"][filename] = entries
     st.session_state["page_sizes"][filename] = 500
+    st.session_state["filters"][filename] = {"search": "", "level": "all", "use_regex": False}
     st.session_state["active_tab"] = filename
 
 
@@ -36,6 +39,7 @@ def remove_file(filename: str) -> None:
     """Remove a loaded file and clean up related state."""
     st.session_state["files"].pop(filename, None)
     st.session_state["page_sizes"].pop(filename, None)
+    st.session_state["filters"].pop(filename, None)
     remaining = list(st.session_state["files"].keys())
     st.session_state["active_tab"] = remaining[-1] if remaining else None
 
