@@ -11,6 +11,8 @@ so startup errors remain visible even when the EXE runs without a console.
 """
 import sys
 import os
+import signal as _signal_mod
+import threading as _threading_mod
 import logging
 import tempfile
 import threading
@@ -18,6 +20,21 @@ import time
 from pathlib import Path
 from urllib.request import urlopen
 from urllib.error import URLError
+
+# ── Thread-safe signal patch ──────────────────────────────────────────────────
+# Streamlit's bootstrap calls signal.signal(SIGTERM, …) during startup, which
+# raises ValueError when invoked from a non-main thread.  We run Streamlit in a
+# daemon thread (pywebview requires the main thread), so we patch signal.signal
+# to silently skip registration when called from a background thread.
+_orig_signal = _signal_mod.signal
+
+
+def _safe_signal(sig, handler):
+    if _threading_mod.current_thread() is _threading_mod.main_thread():
+        return _orig_signal(sig, handler)
+
+
+_signal_mod.signal = _safe_signal
 
 # ── File logging (console is hidden in the packaged EXE) ─────────────────────
 _log_path = Path(tempfile.gettempdir()) / "LokiViewer.log"
