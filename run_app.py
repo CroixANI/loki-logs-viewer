@@ -30,6 +30,7 @@ if __name__ == '__main__':
         "--server.headless=true",
         "--browser.gatherUsageStats=false",
         "--browser.serverAddress=localhost",
+        "--theme.base=dark",
     ]
 
     threading.Thread(target=open_browser, daemon=True).start()
