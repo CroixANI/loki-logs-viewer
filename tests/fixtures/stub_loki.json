@@ -1,0 +1,105 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "streams",
+    "result": [
+      {
+        "stream": {
+          "MessageBody": "{\"SessionId\":\"aaaaaaaa-0001-4000-a000-000000000001\",\"UserId\":\"bbbbbbbb-0001-4000-b000-000000000001\",\"Timestamp\":\"2024-01-15T10:00:00.0000000Z\",\"Reason\":1}",
+          "PayloadType": "Acme.Contracts.Events.SessionStarted",
+          "Sequence": "1000001",
+          "azure_data_center": "westus",
+          "azure_geography": "NOAM",
+          "azure_region": "US",
+          "cluster_id": "test-cluster-01",
+          "deployment_environment": "test",
+          "detected_level": "Information",
+          "key_OriginalFormat_": "Handled message {Sequence}, {PayloadType}, {MessageBody}",
+          "nimbus_environment": "test",
+          "observed_timestamp": "1705312800000000000",
+          "scope_name": "Acme.Queue.Consumer",
+          "service_instance_id": "acme-service-0",
+          "service_name": "acme-service",
+          "service_namespace": "acme",
+          "severity_number": "9",
+          "severity_text": "Information",
+          "telemetry_sdk_language": "dotnet",
+          "telemetry_sdk_name": "opentelemetry",
+          "telemetry_sdk_version": "1.14.0"
+        },
+        "values": [
+          [
+            "1705312800000000000",
+            "Handled message 1000001, Acme.Contracts.Events.SessionStarted, {\"SessionId\":\"aaaaaaaa-0001-4000-a000-000000000001\"}"
+          ]
+        ]
+      },
+      {
+        "stream": {
+          "MessageBody": "{\"SessionId\":\"aaaaaaaa-0001-4000-a000-000000000001\",\"ErrorCode\":42,\"Detail\":\"connection timeout\"}",
+          "PayloadType": "Acme.Contracts.Events.SessionError",
+          "Sequence": "1000002",
+          "azure_data_center": "westus",
+          "azure_geography": "NOAM",
+          "azure_region": "US",
+          "cluster_id": "test-cluster-01",
+          "deployment_environment": "test",
+          "detected_level": "Error",
+          "key_OriginalFormat_": "Handled message {Sequence}, {PayloadType}, {MessageBody}",
+          "nimbus_environment": "test",
+          "observed_timestamp": "1705312810000000000",
+          "scope_name": "Acme.Queue.Consumer",
+          "service_instance_id": "acme-service-1",
+          "service_name": "acme-service",
+          "service_namespace": "acme",
+          "severity_number": "17",
+          "severity_text": "Error",
+          "telemetry_sdk_language": "dotnet",
+          "telemetry_sdk_name": "opentelemetry",
+          "telemetry_sdk_version": "1.14.0"
+        },
+        "values": [
+          [
+            "1705312810000000000",
+            "Handled message 1000002, Acme.Contracts.Events.SessionError, {\"ErrorCode\":42}"
+          ],
+          [
+            "1705312811000000000",
+            "Retry attempt for session aaaaaaaa-0001-4000-a000-000000000001"
+          ]
+        ]
+      },
+      {
+        "stream": {
+          "MessageBody": "{\"SessionId\":\"aaaaaaaa-0001-4000-a000-000000000002\",\"UserId\":\"bbbbbbbb-0001-4000-b000-000000000002\",\"Detail\":\"trace checkpoint reached\"}",
+          "PayloadType": "Acme.Contracts.Events.Checkpoint",
+          "Sequence": "1000003",
+          "azure_data_center": "westus",
+          "azure_geography": "NOAM",
+          "azure_region": "US",
+          "cluster_id": "test-cluster-01",
+          "deployment_environment": "test",
+          "detected_level": "Debug",
+          "key_OriginalFormat_": "Handled message {Sequence}, {PayloadType}, {MessageBody}",
+          "nimbus_environment": "test",
+          "observed_timestamp": "1705312790000000000",
+          "scope_name": "Acme.Queue.Consumer",
+          "service_instance_id": "acme-service-0",
+          "service_name": "acme-service",
+          "service_namespace": "acme",
+          "severity_number": "5",
+          "severity_text": "Debug",
+          "telemetry_sdk_language": "dotnet",
+          "telemetry_sdk_name": "opentelemetry",
+          "telemetry_sdk_version": "1.14.0"
+        },
+        "values": [
+          [
+            "1705312790000000000",
+            "Handled message 1000003, Acme.Contracts.Events.Checkpoint, {\"Detail\":\"trace checkpoint reached\"}"
+          ]
+        ]
+      }
+    ]
+  }
+}
