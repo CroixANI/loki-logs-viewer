@@ -1,28 +1,32 @@
-# Project: Loki Log Viewer (Desktop Edition)
+# Specification: Loki Desktop Log Viewer
 
-## Overview
-A standalone desktop application built with Python, Streamlit, and `streamlit-desktop-app`. The app acts as a local log viewer for JSON files exported from Grafana Loki (HTTP Query Response format).
+## 1. Goal
+A desktop application to visualize Loki JSON stream exports. It must provide a "Grafana-like" experience for inspecting logs and their associated metadata (labels), with special handling for JSON-encoded label values.
 
-## Data Format
-- **Input:** JSON files matching the Loki `matrix` or `streams` response structure.
-- **Key Fields:** `result.values` (containing timestamps and log strings) and `result.stream` (containing labels).
+## 2. Technical Stack
+- **Language:** Python 3.10+
+- **UI Framework:** Streamlit
+- **Desktop Wrapper:** `streamlit-desktop-app` (using PyWebview)
+- **Data Handling:** Pandas (for log sorting/filtering)
 
-## Functional Requirements
-1. **File Management:**
-   - Sidebar file uploader to "Open" JSON files.
-   - Each opened file must appear as a new tab in the main view.
-   - Tabs must be closable (managed via session state).
-2. **Log Display:**
-   - Display logs chronologically.
-   - Each line is a collapsible element (Expander).
-   - **Collapsed View:** Shows Timestamp and the raw Log Message.
-   - **Expanded View:** Shows a table of all labels/metadata associated with that line.
-3. **JSON Detail View:**
-   - Specific labels (e.g., `content`, `payload`, `request`) contain stringified JSON.
-   - Provide an "Eye" icon/button next to these labels.
-   - Clicking the button opens a Modal (`st.dialog`) showing the JSON formatted with syntax highlighting.
+## 3. Input Data Architecture (Loki Streams)
+- **Format:** JSON HTTP Response from Grafana Loki `/loki/api/v1/query_range`.
+- **Target Path:** `data.result[]`
+- **Logic:** - Each `result` contains a `stream` object (labels) and `values` (list of [timestamp, log_line]).
+    - Timestamps are in nanoseconds (Unix Epoch); must be converted to ISO 8601.
 
-## UI/UX Style
-- **Theme:** Dark mode (matching Grafana aesthetics).
-- **Layout:** Wide mode.
-- **Components:** `st.tabs`, `st.expander`, `st.json`, `st.column`.
+## 4. UI Requirements
+- **Sidebar:** - File uploader (Accepts `.json`).
+    - List of "Loaded Sessions" with a "Close" (X) button for each.
+- **Main View (Tabs):**
+    - One tab per JSON file.
+    - Each tab contains a scrollable list of log entries.
+- **Log Entry Component:**
+    - **Header (Collapsed):** Timestamp (Blue text) | Log Level (Color-coded if found) | Truncated Log Message.
+    - **Body (Expanded):** A table showing all labels from that stream.
+    - **JSON Inspector:** If a label key is in `['msg', 'content', 'payload', 'data']`, show an "Eye" icon. Clicking it opens a `st.dialog` modal.
+- **Modal View:** - Displays the label's value using `st.json()` for interactive tree-view and syntax highlighting.
+
+## 5. Performance Constraints
+- Support files up to 50MB.
+- Default view: Show last 500 lines with a "Load 500 More" button at the bottom.
