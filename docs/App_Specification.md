@@ -6,8 +6,11 @@ A desktop application to visualize Loki JSON stream exports. It must provide a "
 ## 2. Technical Stack
 - **Language:** Python 3.10+
 - **UI Framework:** Streamlit
-- **Desktop Wrapper:** `streamlit-desktop-app` (using PyWebview)
 - **Data Handling:** Pandas (for log sorting/filtering)
+- **Packaging:** `streamlit-desktop-app` (PyWebview/Electron-like)
+- **Log Display:** `st.expander` for rows, `st.tabs` for file switching.
+- **Deep Inspection:** `st.dialog` (Modals) for JSON payload viewing.
+- **Styling:** Custom CSS injected from `assets/style.css`.
 
 ## 3. Input Data Architecture (Loki Streams)
 - **Format:** JSON HTTP Response from Grafana Loki `/loki/api/v1/query_range`.
@@ -25,7 +28,11 @@ A desktop application to visualize Loki JSON stream exports. It must provide a "
     - **Header (Collapsed):** Timestamp (Blue text) | Log Level (Color-coded if found) | Truncated Log Message.
     - **Body (Expanded):** A table showing all labels from that stream.
     - **JSON Inspector:** If a label key is in `['msg', 'content', 'payload', 'data']`, show an "Eye" icon. Clicking it opens a `st.dialog` modal.
-- **Modal View:** - Displays the label's value using `st.json()` for interactive tree-view and syntax highlighting.
+- **Modal View:** 
+  - For hardcoded list of labels (right now only "MessageBody" e.g. `['MessageBody', 'message.body']`) will display "eye" icon
+  - **The "Eye" Button:** A small, icon-only button inside the expanded log view.
+  - Displays the label's value using `st.json()` for interactive tree-view and syntax highlighting.
+- **Pagination:** Maximum 500 lines per view with a "Load More" trigger.
 
 ## 5. Performance Constraints
 - Support files up to 50MB.
