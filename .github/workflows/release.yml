@@ -1,0 +1,41 @@
+name: Build & Release Windows EXE
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install streamlit pyinstaller
+
+      - name: Build EXE
+        run: |
+          pyinstaller --onefile `
+            --name LogLens `
+            --console `
+            --collect-all streamlit `
+            --copy-metadata streamlit `
+            --hidden-import streamlit.runtime.scriptrunner.magic_funcs `
+            --hidden-import streamlit.web.cli `
+            --add-data "app.py;." `
+            run_app.py
+
+      - name: Upload EXE to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/LogLens.exe
+          generate_release_notes: true
