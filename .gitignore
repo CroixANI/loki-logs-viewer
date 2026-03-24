@@ -1,2 +1,10 @@
 logs2
 .claude
+
+# Real log exports — never commit, use tests/fixtures/ for obfuscated stubs
+logs-examples/
+
+# Python artifacts
+__pycache__/
+*.pyc
+.DS_Store

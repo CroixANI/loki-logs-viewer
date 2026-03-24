@@ -61,7 +61,8 @@ def _empty_df() -> pd.DataFrame:
 
 
 # Known label keys that carry a log-level value, checked in priority order.
-_LEVEL_KEYS = ("level", "severity", "lvl", "log_level")
+# severity_text / detected_level are standard OpenTelemetry/Loki export keys.
+_LEVEL_KEYS = ("level", "severity_text", "detected_level", "severity", "lvl", "log_level")
 _LEVEL_NORMALISE = {
     "error": "error", "err": "error", "critical": "error", "fatal": "error",
     "warn": "warn", "warning": "warn",
