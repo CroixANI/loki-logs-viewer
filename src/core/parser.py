@@ -1,43 +1,41 @@
 # NOTE: No streamlit imports allowed in this module.
-import json
-
-import pandas as pd
-
 from src.utils.helpers import format_timestamp
 
 # Label keys that may contain a JSON-encoded payload worth inspecting.
 INSPECTABLE_LABELS = {"MessageBody", "message.body"}
 
+# Type alias for a parsed log entry.
+# Keys: ts (datetime), ts_ns (str), message (str), level (str), labels (dict)
+LogEntry = dict
 
-def parse_loki_json(raw: dict) -> pd.DataFrame:
-    """Parse a Loki /query_range JSON response into a flat DataFrame.
 
-    Each row represents one log line. Stream labels are stored as a dict
-    in the 'labels' column so the original structure is preserved and
-    accessible to UI components without extra joins.
+def parse_loki_json(raw: dict) -> list[LogEntry]:
+    """Parse a Loki /query_range JSON response into a flat list of log entries.
+
+    Each entry is a dict with keys:
+        ts        - UTC datetime
+        ts_ns     - original nanosecond string (for stable widget keys)
+        message   - raw log line string
+        level     - normalised log level string, or '' if not found
+        labels    - dict of all stream labels for this entry
 
     Args:
         raw: Parsed JSON dict from a Loki export file.
 
     Returns:
-        DataFrame sorted by timestamp descending with columns:
-            ts          - UTC datetime
-            ts_ns       - original nanosecond string (for stable row keys)
-            message     - raw log line string
-            level       - log level string or empty string if not found
-            labels      - dict of all stream labels for this entry
+        List of log entry dicts sorted by timestamp descending.
     """
     results = raw.get("data", {}).get("result", [])
     if not results:
-        return _empty_df()
+        return []
 
-    rows = []
+    entries: list[LogEntry] = []
     for stream_obj in results:
         labels: dict = stream_obj.get("stream", {})
         values: list = stream_obj.get("values", [])
         level = _extract_level(labels)
         for ts_ns, line in values:
-            rows.append(
+            entries.append(
                 {
                     "ts": format_timestamp(ts_ns),
                     "ts_ns": ts_ns,
@@ -47,17 +45,8 @@ def parse_loki_json(raw: dict) -> pd.DataFrame:
                 }
             )
 
-    if not rows:
-        return _empty_df()
-
-    df = pd.DataFrame(rows)
-    df.sort_values("ts", ascending=False, inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    return df
-
-
-def _empty_df() -> pd.DataFrame:
-    return pd.DataFrame(columns=["ts", "ts_ns", "message", "level", "labels"])
+    entries.sort(key=lambda e: e["ts"], reverse=True)
+    return entries
 
 
 # Known label keys that carry a log-level value, checked in priority order.
