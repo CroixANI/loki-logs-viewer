@@ -22,30 +22,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Python 3.11 is used for stability with PyInstaller 6.x.
+      # Do not upgrade to 3.12+ without verifying PyInstaller compatibility.
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      # requirements-desktop.txt includes requirements.txt (streamlit) plus
+      # pywebview and pyinstaller at pinned versions.
       - name: Install dependencies
-        run: |
-          pip install streamlit pyinstaller
+        run: pip install -r requirements-desktop.txt
 
+      # windows.spec defines all datas, hiddenimports, and build flags.
+      # Output: dist/LokiViewer.exe (windowed, no console, single file).
       - name: Build EXE
-        run: |
-          pyinstaller --onefile `
-            --name LogLens `
-            --windowed `
-            --collect-all streamlit `
-            --copy-metadata streamlit `
-            --hidden-import streamlit.runtime.scriptrunner.magic_funcs `
-            --hidden-import streamlit.web.cli `
-            --add-data "app.py;." `
-            run_app.py
+        run: pyinstaller windows.spec
 
       - name: Upload EXE to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          files: dist/LogLens.exe
+          files: dist/LokiViewer.exe
           generate_release_notes: true
