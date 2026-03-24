@@ -25,12 +25,11 @@ A desktop application to visualize Loki JSON stream exports. It must provide a "
     - One tab per JSON file.
     - Each tab contains a scrollable list of log entries.
 - **Log Entry Component:**
-    - **Header (Collapsed):** Timestamp (Blue text) | Log Level (Color-coded if found) | Truncated Log Message.
+    - **Header (Collapsed):** Timestamp (Blue text) | Log Level (Color-coded if found) | Log Message truncated to 100 characters.
     - **Body (Expanded):** A table showing all labels from that stream.
-    - **JSON Inspector:** If a label key is in `['msg', 'content', 'payload', 'data']`, show an "Eye" icon. Clicking it opens a `st.dialog` modal.
-- **Modal View:** 
-  - For hardcoded list of labels (right now only "MessageBody" e.g. `['MessageBody', 'message.body']`) will display "eye" icon
-  - **The "Eye" Button:** A small, icon-only button inside the expanded log view.
+    - **JSON Inspector:** For a hardcoded list of label keys (`['MessageBody', 'message.body']`), show an "Eye" icon button. Clicking it opens a `st.dialog` modal.
+- **Modal View:**
+  - **The "Eye" Button:** A small, icon-only button inside the expanded log view, shown only for labels in `['MessageBody', 'message.body']`.
   - Displays the label's value using `st.json()` for interactive tree-view and syntax highlighting.
 - **Pagination:** Maximum 500 lines per view with a "Load More" trigger.
 

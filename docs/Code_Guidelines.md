@@ -24,3 +24,8 @@ The application MUST follow this structure to ensure maintainability:
 
 ## 5. Performance
 - Use `@st.cache_data` for the JSON parsing functions to avoid re-processing 50MB files on every click.
+- The `@st.cache_data` wrapper must live in `src/core/state.py`, not in `parser.py`, to keep `parser.py` free of Streamlit imports.
+
+## 6. Dependencies
+- All dependencies must be pinned to exact versions in `requirements.txt` (e.g., `streamlit==1.35.0`).
+- This is essential for reproducible builds across Windows and macOS.
