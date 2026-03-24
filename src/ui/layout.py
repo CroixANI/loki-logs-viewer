@@ -30,29 +30,68 @@ def render_sidebar() -> None:
                 with col_name:
                     st.markdown(f"📄 `{filename}`")
                 with col_close:
-                    if st.button("✕", key=f"close_{filename}", help=f"Close {filename}"):
+                    if st.button("✕", key=f"side_close_{filename}", help=f"Close {filename}"):
                         remove_file(filename)
                         st.rerun()
 
 
 def render_main() -> None:
-    """Render the main area: one tab per loaded file with paginated log rows."""
+    """Render the main area: custom tab bar + active file content."""
     files = st.session_state["files"]
 
     if not files:
         st.info("Upload a Loki JSON export using the sidebar to get started.")
         return
 
-    tab_labels = list(files.keys())
-    tabs = st.tabs(tab_labels)
+    file_names = list(files.keys())
 
-    for tab, filename in zip(tabs, tab_labels):
-        with tab:
-            _render_file_tab(filename)
+    # Ensure active_tab points to a loaded file.
+    active = st.session_state.get("active_tab")
+    if active not in files:
+        active = file_names[0]
+        st.session_state["active_tab"] = active
+
+    _render_tab_bar(file_names, active)
+    _render_file_tab(active)
+
+
+def _render_tab_bar(file_names: list, active: str) -> None:
+    """Render a custom tab bar with a close button per tab."""
+    # Each file gets two columns: [label button, close button].
+    col_weights = [6, 1] * len(file_names)
+    cols = st.columns(col_weights)
+
+    close_target = None
+
+    st.markdown('<div class="tab-bar">', unsafe_allow_html=True)
+
+    for i, name in enumerate(file_names):
+        label = f"⚡ {name[:28]}{'…' if len(name) > 28 else ''}"
+        is_active = name == active
+        tab_class = "tab-active" if is_active else "tab-inactive"
+
+        with cols[i * 2]:
+            st.markdown(f'<div class="{tab_class}">', unsafe_allow_html=True)
+            if st.button(label, key=f"tab_{name}", use_container_width=True):
+                st.session_state["active_tab"] = name
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        with cols[i * 2 + 1]:
+            st.markdown('<div class="tab-close">', unsafe_allow_html=True)
+            if st.button("✕", key=f"tabclose_{name}", help=f"Close {name}"):
+                close_target = name
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if close_target:
+        remove_file(close_target)
+        st.rerun()
 
 
 def _render_file_tab(filename: str) -> None:
-    """Render filter controls and paginated log rows for a single file tab."""
+    """Render filter controls and paginated log rows for the active file."""
     entries = st.session_state["files"][filename]
     total = len(entries)
 
