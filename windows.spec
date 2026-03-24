@@ -38,7 +38,8 @@ a = Analysis(
         "streamlit.runtime.scriptrunner",
         "webview",
         "webview.platforms.edgechromium",
-        "clr",           # pythonnet — required by pywebview on Windows
+        # Note: pythonnet (clr) is NOT listed — pywebview 6.x EdgeChromium
+        # backend does not require it and it is not available on CI runners.
     ],
     hookspath=[],
     hooksconfig={},
