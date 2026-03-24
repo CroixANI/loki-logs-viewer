@@ -50,20 +50,20 @@ def render_main() -> None:
 
 def _render_file_tab(filename: str) -> None:
     """Render all paginated log rows for a single file tab."""
-    df = st.session_state["files"][filename]
+    entries = st.session_state["files"][filename]
     page_size = st.session_state["page_sizes"].get(filename, 500)
-    total = len(df)
+    total = len(entries)
 
     if total == 0:
         st.warning("No log entries found in this file.")
         return
 
-    visible = df.head(page_size)
+    visible = entries[:page_size]
 
     st.caption(f"Showing {min(page_size, total):,} of {total:,} entries (newest first)")
 
-    for idx, row in visible.iterrows():
-        render_log_row(row.to_dict(), row_key=f"{filename}_{idx}")
+    for idx, entry in enumerate(visible):
+        render_log_row(entry, row_key=f"{filename}_{idx}")
 
     if page_size < total:
         remaining = total - page_size
