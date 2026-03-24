@@ -56,38 +56,32 @@ def render_main() -> None:
 
 
 def _render_tab_bar(file_names: list, active: str) -> None:
-    """Render a custom tab bar with a close button per tab."""
-    # Each file gets two columns: [label button, close button].
+    """Render a custom tab bar with a close button per tab.
+
+    Active tab uses type="primary" for a native visual distinction.
+    Close buttons call remove_file() + st.rerun() directly (no deferred
+    close_target pattern) — same as the working sidebar close buttons.
+    """
     col_weights = [6, 1] * len(file_names)
     cols = st.columns(col_weights)
-
-    close_target = None
-
-    st.markdown('<div class="tab-bar">', unsafe_allow_html=True)
 
     for i, name in enumerate(file_names):
         label = f"⚡ {name[:28]}{'…' if len(name) > 28 else ''}"
         is_active = name == active
-        tab_class = "tab-active" if is_active else "tab-inactive"
 
         with cols[i * 2]:
-            st.markdown(f'<div class="{tab_class}">', unsafe_allow_html=True)
-            if st.button(label, key=f"tab_{name}", use_container_width=True):
-                st.session_state["active_tab"] = name
-                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
+            btn_type = "primary" if is_active else "secondary"
+            if st.button(label, key=f"tab_{name}", use_container_width=True, type=btn_type):
+                if not is_active:
+                    st.session_state["active_tab"] = name
+                    st.rerun()
 
         with cols[i * 2 + 1]:
-            st.markdown('<div class="tab-close">', unsafe_allow_html=True)
-            if st.button("✕", key=f"tabclose_{name}", help=f"Close {name}"):
-                close_target = name
-            st.markdown("</div>", unsafe_allow_html=True)
+            if st.button("✕", key=f"tabclose_{name}", help=f"Close {name}", use_container_width=True):
+                remove_file(name)
+                st.rerun()
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    if close_target:
-        remove_file(close_target)
-        st.rerun()
+    st.divider()
 
 
 def _render_file_tab(filename: str) -> None:
