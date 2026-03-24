@@ -8,6 +8,7 @@ SERVER_URL = f"http://localhost:{SERVER_PORT}"
 
 # Streamlit flags applied when launched in desktop mode.
 STREAMLIT_ARGS = [
+    "--global.developmentMode=false",  # must be false to allow server.port override
     "--server.headless=true",
     "--server.runOnSave=false",
     f"--server.port={SERVER_PORT}",
